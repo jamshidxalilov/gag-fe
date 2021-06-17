@@ -2,28 +2,31 @@
   <div id="app">
     <b-container>
       <b-card header="Test">
-        <b-button variant="success" @click="loadItems()">Reload</b-button>
-        <div class="text-center" v-if="loading">
-          <b-spinner/>
-        </div>
-        <b-table class="mt-5" v-else :items="items"
-                 :fields="fields"
-        ></b-table>
+        <b-table ref="tbl" class="mt-5" :items="loadItems" :fields="fields" />
       </b-card>
+
+      <b-button @click="$refs.tbl.refresh()" :disabled="loading">
+        <b-spinner v-if="loading" small/>
+        Reload
+      </b-button>
     </b-container>
   </div>
 </template>
 
 <script>
+
+import moment from 'moment'
 export default {
   data() {
     return {
       loading: false,
       fields: [
-        {key: "fname", text: "Ism"},
-        {key: "lname", text: "Familiya"},
+        {key: "fname", label: "Ism"},
+        {key: "lname", label: "Familiya"},
+        {key: "qs", label: "Qo'shilgan sanasi", formatter(v){
+          return moment(v).format("DD.MM.YYYY HH:mm")
+          }},
       ],
-      items: []
     }
   },
 
@@ -31,12 +34,11 @@ export default {
     this.loadItems()
   },
   methods: {
-    loadItems() {
+    async loadItems() {
       this.loading = true
-      fetch('/api/names/').then(r => r.json()).then(r => {
-        this.items = r
-        this.loading = false
-      })
+      let r = await this.$axios.get('names/')
+      this.loading = false
+      return r.data
     }
   }
 }
